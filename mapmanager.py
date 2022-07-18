@@ -1,5 +1,5 @@
 from random import random
-
+import pickle
 
 class Mapmanager():
     def __init__(self):
@@ -8,25 +8,60 @@ class Mapmanager():
         self.color = (0,1,0,1)
         self.startNew()
  
+    def set_brick(self):
+        self.texture = 'brick.png'
+    
+    def set_stone(self):
+        self.texture = 'stone.png'
+
     def startNew(self):       
 	    self.land = render.attachNewNode("Land")
 
     def clear(self):
         self.land.removeNode()
-        self.startnew()
-        
-    def addBlock(self, position):
+        self.startNew()
+
+    def addBlock(self, position, texture = None):
         block = loader.loadModel(self.model)
-        texture = loader.loadTexture(self.texture)
+        if texture is None:
+            texture = loader.loadTexture(self.texture)
+    
         block.setTexture(texture)
-        if position[2] < 2:
-            block.setColor((0.1,0.1,0.1,0))
-        elif position[2] < 5:
-            block.setColor((1,0,0,0))
-        # block.setColor(self.color)
+        
         block.setPos(position)
+
         block.reparentTo(self.land)
 
+    def check_position(self, position):
+        position = position[0], position[1], position[2]
+        
+        for block in self.land.getChildren():
+            if position == block.getPos():
+                return True
+        return False
+
+    def save_map(self):
+        all_blocks = self.land.getChildren()
+        with open("map.dat","wb") as file:
+            pickle.dump(len(all_blocks),file)
+            for block in all_blocks:
+                x,y,z = block.getPos()
+                pickle.dump(x,file)
+                pickle.dump(y,file)
+                pickle.dump(z,file)
+                #pickle.dump(block.getTexture(),file)
+
+    def load_pickle_map(self):
+        self.clear()
+        with open("map.dat","rb") as file:
+            n_blocks = pickle.load(file)
+            for i in range(n_blocks):
+                x = pickle.load(file)
+                y = pickle.load(file)
+                z = pickle.load(file)
+                texture = pickle.load(file)
+                self.addBlock((x,y,z), texture)
+                
     def load_map(self):
         with open("map.txt", "r") as file:
             data = file.readlines()
